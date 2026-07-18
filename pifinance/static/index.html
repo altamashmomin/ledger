@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15171c">
+<title>Ledger — household finance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============ auth ============ -->
+<section id="view-auth" class="auth hidden">
+  <div class="auth-card">
+    <h1 class="wordmark">LEDGER</h1>
+    <p class="auth-sub" id="auth-sub">Household finance for two.</p>
+
+    <form id="form-login" class="hidden" autocomplete="on">
+      <label>Username <input name="username" required autocapitalize="none" autocomplete="username"></label>
+      <label>Password <input name="password" type="password" required autocomplete="current-password"></label>
+      <p class="form-error" id="login-error"></p>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+
+    <form id="form-setup" class="hidden">
+      <p class="setup-note">First run — create both accounts. This screen never appears again.</p>
+      <fieldset>
+        <legend>Person one</legend>
+        <label>Name <input name="d0" required placeholder="Alta" autocapitalize="words"></label>
+        <label>Username <input name="u0" required autocapitalize="none"></label>
+        <label>Password <input name="p0" type="password" required minlength="8"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Person two</legend>
+        <label>Name <input name="d1" required autocapitalize="words"></label>
+        <label>Username <input name="u1" required autocapitalize="none"></label>
+        <label>Password <input name="p1" type="password" required minlength="8"></label>
+      </fieldset>
+      <p class="form-error" id="setup-error"></p>
+      <button class="btn primary" type="submit">Create accounts</button>
+    </form>
+  </div>
+</section>
+
+<!-- ============ app ============ -->
+<section id="view-app" class="hidden">
+  <header class="topbar">
+    <span class="wordmark small">LEDGER</span>
+    <nav class="topnav" id="topnav"></nav>
+    <button class="btn ghost" id="btn-logout" type="button">Sign out</button>
+  </header>
+
+  <main id="main"></main>
+
+  <nav class="tabbar" id="tabbar"></nav>
+  <button class="fab" id="fab" type="button" aria-label="Add expense">+</button>
+</section>
+
+<!-- ============ dialogs ============ -->
+<dialog id="dlg-txn">
+  <form method="dialog" id="form-txn">
+    <h2 id="txn-title">Add expense</h2>
+    <div class="row2">
+      <label>Date <input name="date" type="date" required></label>
+      <label>Amount <input name="amount" type="number" step="0.01" min="0.01" inputmode="decimal" required placeholder="0.00"></label>
+    </div>
+    <label>Description <input name="description" required maxlength="200" placeholder="Groceries at ShopRite"></label>
+    <label>Category
+      <input name="category" list="category-list" placeholder="Groceries">
+      <datalist id="category-list"></datalist>
+    </label>
+    <label class="lbl">Paid by</label>
+    <div class="seg" id="txn-paidby"></div>
+    <label class="check"><input name="is_shared" type="checkbox" checked> Shared expense</label>
+    <div id="txn-split">
+      <label class="lbl">Split — payer covers <b id="split-readout">50%</b></label>
+      <input name="payer_share_pct" type="range" min="0" max="100" step="5" value="50">
+      <p class="split-hint" id="split-hint"></p>
+    </div>
+    <p class="form-error" id="txn-error"></p>
+    <div class="dlg-actions">
+      <button class="btn danger hidden" id="btn-txn-delete" type="button">Delete</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" id="btn-txn-save" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-bill">
+  <form method="dialog" id="form-bill">
+    <h2 id="bill-title">Add bill</h2>
+    <label>Name <input name="name" required maxlength="100" placeholder="Internet"></label>
+    <div class="row2">
+      <label>Amount <input name="amount" type="number" step="0.01" min="0.01" inputmode="decimal" required></label>
+      <label>Due day <input name="due_day" type="number" min="1" max="31" required placeholder="1–31"></label>
+    </div>
+    <label>Category <input name="category" list="category-list" placeholder="Utilities"></label>
+    <p class="form-error" id="bill-error"></p>
+    <div class="dlg-actions">
+      <button class="btn danger hidden" id="btn-bill-delete" type="button">Delete</button>
+      <span class="spacer"></span>
+      <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" type="submit">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-pay">
+  <form method="dialog" id="form-pay">
+    <h2>Mark paid</h2>
+    <p class="pay-summary" id="pay-summary"></p>
+    <label class="lbl">Paid by</label>
+    <div class="seg" id="pay-paidby"></div>
+    <label class="check"><input name="is_shared" type="checkbox" checked> Shared 50/50</label>
+    <p class="form-error" id="pay-error"></p>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" type="submit">Mark paid</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-goal">
+  <form method="dialog" id="form-goal">
+    <h2>New goal</h2>
+    <label>Name <input name="name" required maxlength="100" placeholder="Emergency fund"></label>
+    <div class="row2">
+      <label>Target <input name="target" type="number" step="0.01" min="0.01" inputmode="decimal" required></label>
+      <label>Target date <input name="target_date" type="date"></label>
+    </div>
+    <p class="form-error" id="goal-error"></p>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" type="submit">Create goal</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-contrib">
+  <form method="dialog" id="form-contrib">
+    <h2 id="contrib-title">Add to goal</h2>
+    <label>Amount <input name="amount" type="number" step="0.01" inputmode="decimal" required placeholder="Use a negative number to withdraw"></label>
+    <label>Note <input name="note" maxlength="200" placeholder="optional"></label>
+    <p class="form-error" id="contrib-error"></p>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" type="submit">Add</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="dlg-settle">
+  <form method="dialog" id="form-settle">
+    <h2>Settle up</h2>
+    <p id="settle-summary"></p>
+    <p class="split-hint">This records the repayment so the balance returns to zero. Do the actual transfer however you like (Zelle, cash, etc.).</p>
+    <p class="form-error" id="settle-error"></p>
+    <div class="dlg-actions">
+      <span class="spacer"></span>
+      <button class="btn ghost" value="cancel" formnovalidate>Cancel</button>
+      <button class="btn primary" type="submit">Record settlement</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="app.js"></script>
+</body>
+</html>

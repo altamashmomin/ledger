@@ -1,0 +1,22 @@
+# Pi Finance web app — /etc/systemd/system/pifinance.service
+# Adjust User and paths if your username or install dir differs.
+[Unit]
+Description=Pi Finance web app
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/pifinance
+EnvironmentFile=/home/pi/pifinance/.env
+ExecStart=/home/pi/pifinance/venv/bin/gunicorn --workers 2 --bind 0.0.0.0:${PORT} app:app
+Restart=on-failure
+RestartSec=5
+
+# Hardening (safe defaults for a home service)
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+
+[Install]
+WantedBy=multi-user.target
