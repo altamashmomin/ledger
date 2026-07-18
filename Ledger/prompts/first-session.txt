@@ -1,0 +1,24 @@
+Read CLAUDE.md and docs/CORE-DESIGN.md fully before doing anything.
+
+Then, in order, as separate small commits:
+
+1. Commit the docs: CLAUDE.md, docs/, and .gitignore (if the repo
+   already had a .gitignore, merge the patterns instead of replacing).
+2. Create the `rework` branch from the current state and switch to it.
+3. Build sequence item 1: the migration runner. Numbered idempotent
+   migration files in migrations/, applied in order inside a
+   transaction, recorded in a schema_version table (migration #001
+   creates that table). Include a way to see current version and
+   pending migrations.
+4. Build sequence item 4: the balance gate script. It shadow-compares
+   old vs new code against a database copy and must check: the
+   who-owes-whom balance to the cent, monthly spend totals for every
+   month present, and per-table row counts. Design it so an increment
+   can declare an expected diff and only that diff passes.
+5. Create a synthetic seed database that matches the CURRENT deployed
+   schema (read the actual schema files in this repo — deployed
+   spellings win over the design docs) and test both the runner and
+   the gate against it. Never touch any real .db file.
+
+Do NOT build migration #002 (members + splits) yet — that comes next
+session, after I review the runner and gate line by line.
